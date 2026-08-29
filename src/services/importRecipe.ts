@@ -3,6 +3,38 @@ import { ImportRecipeResponse, ImportedRecipeDraft } from '@/types'
 import { normalizeDraft } from '@/utils/recipeNormalizer'
 
 export type DetectedSourcePlatform = 'xiaohongshu' | 'xiachufang' | 'unknown'
+export const IMPORT_TIMEOUT_MS = 15_000
+
+export interface ImportSignal {
+  readonly aborted: boolean
+  subscribe: (listener: () => void) => () => void
+}
+
+export interface ImportController {
+  signal: ImportSignal
+  abort: () => void
+}
+
+export function createImportController(): ImportController {
+  let aborted = false
+  const listeners = new Set<() => void>()
+  return {
+    signal: {
+      get aborted() { return aborted },
+      subscribe(listener) {
+        if (aborted) listener()
+        else listeners.add(listener)
+        return () => listeners.delete(listener)
+      }
+    },
+    abort() {
+      if (aborted) return
+      aborted = true
+      listeners.forEach((listener) => listener())
+      listeners.clear()
+    }
+  }
+}
 
 export function detectSourcePlatform(url: string): DetectedSourcePlatform {
   const value = url.trim().toLowerCase()
@@ -15,22 +47,49 @@ function getApiBase(): string {
   return String(process.env.TARO_APP_IMPORT_API_BASE || '').replace(/\/$/, '')
 }
 
-export async function importRecipe(url: string): Promise<ImportRecipeResponse> {
+export function isImportServiceConfigured(): boolean {
+  return Boolean(getApiBase())
+}
+
+function cancelledResult(): ImportRecipeResponse {
+  return { success: false, errorCode: 'CANCELLED', message: '已取消导入，没有保存任何内容。' }
+}
+
+export async function importRecipe(url: string, signal?: ImportSignal): Promise<ImportRecipeResponse> {
   const apiBase = getApiBase()
   if (!apiBase) return { success: false, errorCode: 'SERVICE_UNAVAILABLE', message: '尚未配置导入服务地址，可粘贴原文继续创建草稿。' }
+  if (signal?.aborted) return cancelledResult()
+
+  let abortRequest: () => void = () => undefined
+  let unsubscribe: () => void = () => undefined
+  const cancelled = new Promise<ImportRecipeResponse>((resolve) => {
+    unsubscribe = signal?.subscribe(() => {
+      abortRequest()
+      resolve(cancelledResult())
+    }) || unsubscribe
+  })
+
   try {
-    const response = await Taro.request<ImportRecipeResponse>({
+    const requestTask = Taro.request<ImportRecipeResponse>({
       url: `${apiBase}/api/import/recipe`,
       method: 'POST',
       data: { url },
-      timeout: 15000,
+      timeout: IMPORT_TIMEOUT_MS,
       header: { 'content-type': 'application/json' }
     })
+    abortRequest = () => requestTask.abort?.()
+    const response = await Promise.race([requestTask, cancelled])
+    if ('success' in response) return response
     const body = response.data
     if (body.success) return { ...body, data: normalizeDraft(body.data, url) }
     return body
-  } catch {
+  } catch (error) {
+    if (signal?.aborted) return cancelledResult()
+    const detail = String((error as { errMsg?: string })?.errMsg || (error as Error)?.message || '')
+    if (/timeout/i.test(detail)) return { success: false, errorCode: 'SOURCE_TIMEOUT', message: '读取超过 15 秒，已停止等待。可稍后重试或粘贴原文继续。' }
     return { success: false, errorCode: 'SERVICE_UNAVAILABLE', message: '导入服务暂时不可用，可粘贴原文继续创建草稿。' }
+  } finally {
+    unsubscribe()
   }
 }
 

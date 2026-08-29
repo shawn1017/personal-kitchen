@@ -1,16 +1,27 @@
 .import-page { padding-bottom: 60rpx; }
-.import-card, .progress-card, .error-card, .fallback-card { margin-top: 24rpx; padding: 24rpx; }
+.import-card, .progress-card, .error-card, .fallback-card, .service-notice { margin-top: 24rpx; padding: 24rpx; }
 .field-title { margin-bottom: 14rpx; font-size: 29rpx; font-weight: 820; }
 .platform-hint { margin-top: 12rpx; color: #8b928b; font-size: 22rpx; }
 .platform-hint.xiaohongshu, .platform-hint.xiachufang { color: #347e45; }
 .platform-hint.unknown { color: #b15b50; }
 .import-button { width: 100%; margin-top: 22rpx; }
-.progress-card > view { min-height: 66rpx; display: flex; align-items: center; gap: 16rpx; color: #a1a7a1; }
-.progress-card > view.is-current { color: #276e37; font-weight: 800; }
-.progress-card > view.is-done { color: #6c886f; }
+.service-notice { border-color: #f0d6b2; background: #fff8ed; color: #80684c; font-size: 23rpx; line-height: 1.6; }
+.service-notice-title { margin-bottom: 6rpx; color: #9b6129; font-size: 28rpx; font-weight: 820; }
+.progress-summary { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; }
+.progress-title { color: #254d2e; font-size: 30rpx; font-weight: 850; }
+.progress-time { margin-top: 6rpx; color: #849087; font-size: 21rpx; }
+.progress-percent { color: #347e45; font-size: 38rpx; font-weight: 850; font-variant-numeric: tabular-nums; }
+.progress-track { height: 16rpx; margin-top: 22rpx; overflow: hidden; border-radius: 999rpx; background: #e7ece7; }
+.progress-fill { height: 100%; border-radius: inherit; background: linear-gradient(90deg, #65ad70, #2f8443); transition: width .25s ease; }
+.progress-stage { margin-top: 14rpx; color: #397347; font-size: 23rpx; font-weight: 720; }
+.progress-steps { margin-top: 16rpx; }
+.progress-steps > view { min-height: 58rpx; display: flex; align-items: center; gap: 16rpx; color: #a1a7a1; }
+.progress-steps > view.is-current { color: #276e37; font-weight: 800; }
+.progress-steps > view.is-done { color: #6c886f; }
 .progress-dot { width: 20rpx; height: 20rpx; border-radius: 50%; background: #d7ddd7; }
 .is-current .progress-dot { background: #4caf50; box-shadow: 0 0 0 9rpx rgba(76,175,80,.13); }
 .is-done .progress-dot { background: #8cc596; }
+.cancel-button { width: 100%; height: 70rpx; margin-top: 12rpx; color: #727a73; font-size: 24rpx; background: #f4f6f4; }
 .error-card { border-color: #f0d9d6; background: #fffafa; }
 .error-title { color: #a74842; font-size: 29rpx; font-weight: 820; }
 .error-message { margin-top: 12rpx; color: #6e5c5a; line-height: 1.55; }

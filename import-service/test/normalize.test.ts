@@ -6,6 +6,7 @@ import { parseXiachufang } from '../src/providers/xiachufang.js'
 import { parseXiaohongshu } from '../src/providers/xiaohongshu.js'
 import { consumeRelayToken, relayDraftImages } from '../src/imageRelay.js'
 import { isAccessChallenge } from '../src/fetcher.js'
+import { ImportError } from '../src/types.js'
 
 test('识别支持的平台和拦截未知来源', () => {
   assert.equal(detectPlatform(new URL('https://www.xiachufang.com/recipe/1')), 'xiachufang')
@@ -50,6 +51,13 @@ test('小红书保留原始正文并按编号拆步骤', () => {
   assert.equal(result.draft.title, '啤酒鸭')
   assert.equal(result.draft.rawContent?.includes('焯水'), true)
   assert.equal(result.draft.steps.length, 2)
+})
+
+test('小红书失效页不会被误判为导入成功', () => {
+  assert.throws(
+    () => parseXiaohongshu('<title>小红书 - 你访问的页面不见了</title><meta property="og:image" content="https://img.example.com/error.png">', 'https://www.xiaohongshu.com/discovery/item/missing'),
+    (error) => error instanceof ImportError && error.code === 'SOURCE_BLOCKED'
+  )
 })
 
 test('图片中转只接受服务端登记的短期 token', () => {

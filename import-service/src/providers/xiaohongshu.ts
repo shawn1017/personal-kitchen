@@ -11,6 +11,9 @@ function visibleImages(html: string): string[] {
 export function parseXiaohongshu(html: string, sourceUrl: string): ProviderResult {
   const meta = metadataFromHtml(html)
   const title = cleanTitle(meta.title, 'xiaohongshu')
+  if (/(?:页面不见了|页面不存在|笔记不存在|内容不存在|内容已删除|笔记已删除)/i.test(`${meta.title} ${meta.description}`)) {
+    throw new ImportError('SOURCE_BLOCKED', '该笔记当前无法公开读取，可能已失效或需要有效分享链接')
+  }
   const rawContent = meta.description
   const images = uniqueUrls([...meta.images, ...visibleImages(html)]).slice(0, 30)
   const steps = splitSteps(rawContent).map((step, index) => ({ ...step, image: images[index + 1] }))

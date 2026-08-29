@@ -100,6 +100,7 @@ export type ImportErrorCode =
   | 'SOURCE_TIMEOUT'
   | 'PARSE_FAILED'
   | 'SERVICE_UNAVAILABLE'
+  | 'CANCELLED'
 
 export interface ImportRecipeSuccess {
   success: true
