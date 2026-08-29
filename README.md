@@ -66,6 +66,8 @@ Import Service 默认监听 `http://127.0.0.1:3210`，健康检查为 `GET /heal
 
 本仓库通过 GitHub Actions 自动构建并发布 H5 到 GitHub Pages。网页使用 Hash 路由，分类、菜谱、菜单和订单数据保存在当前浏览器的 Local Storage 中；刷新页面后仍会保留，但不会自动跨浏览器或跨设备同步。
 
+- 在线预览：<https://shawn1017.github.io/personal-kitchen/>
+- GitHub 仓库：<https://github.com/shawn1017/personal-kitchen>
 - 推送到 `main` 分支后会自动部署。
 - Pages 构建会根据 GitHub 仓库名自动设置静态资源子路径，本地构建仍使用 `/`。
 - 纯静态 Pages 不运行 Import Service；链接自动解析会提示服务未配置，仍可用“粘贴原文”或“详细录入”创建菜谱。
