@@ -1,0 +1,65 @@
+.edit-page { padding: 0 0 calc(170rpx + env(safe-area-inset-bottom)); background: #f5f6f5; }
+.edit-loading { min-height: 100vh; padding: 160rpx 30rpx 0; color: #8a918a; text-align: center; font-size: 25rpx; }
+.edit-heading { padding: 28rpx 30rpx 24rpx; background: #fff; }
+.edit-page .pk-card { border: 0; border-radius: 0; box-shadow: none; }
+.edit-section { margin-bottom: 14rpx; padding: 28rpx 30rpx; background: #fff; }
+.section-title { font-size: 31rpx; font-weight: 900; }
+.section-head { margin-bottom: 20rpx; display: flex; align-items: center; justify-content: space-between; gap: 16rpx; }
+.section-head .section-title { white-space: nowrap; }
+.section-heading { display: flex; align-items: center; gap: 12rpx; }
+.section-head-actions { display: flex; align-items: center; gap: 10rpx; }
+.section-toggle { width: auto; height: 52rpx; padding: 0 12rpx; color: #747b74; font-size: 21rpx; }
+.mini-add { width: auto; flex: none; height: 54rpx; padding: 0 14rpx; display: flex; align-items: center; gap: 6rpx; border-radius: 27rpx; background: #eef7ef; color: #347e45; font-size: 21rpx; font-weight: 800; }
+.cover-editor { margin-top: 20rpx; display: flex; gap: 18rpx; }
+.edit-cover-wrap { position: relative; width: calc(50% - 9rpx); height: 210rpx; flex: none; }
+.edit-cover { width: 100%; height: 100%; border-radius: 20rpx; }
+.remove-cover { position: absolute; right: 10rpx; top: 10rpx; width: 54rpx; height: 54rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #e84d4b; }
+.remove-cover .hm-icon { filter: brightness(0) invert(1); }
+.cover-label { position: absolute; left: 14rpx; bottom: 12rpx; padding: 6rpx 12rpx; border-radius: 14rpx; background: rgba(22, 26, 23, .65); color: #fff; font-size: 20rpx; font-weight: 800; }
+.cover-upload { width: calc(50% - 9rpx); height: 210rpx; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12rpx; border: 2rpx dashed #cfd5cf; border-radius: 20rpx; color: #99a09a; font-size: 24rpx; }
+.cover-upload .hm-icon { width: 64rpx; height: 64rpx; opacity: .65; }
+.cover-actions { margin-top: 16rpx; display: flex; align-items: center; gap: 16rpx; }
+.cover-actions button { width: auto; min-height: 54rpx; padding: 0 16rpx; display: flex; align-items: center; gap: 6rpx; border: 2rpx solid #dfe5df; border-radius: 12rpx; color: #477a4d; font-size: 21rpx; }
+.cover-actions > view { color: #969c96; font-size: 20rpx; }
+.gallery-strip { margin-top: 18rpx; display: flex; gap: 12rpx; overflow-x: auto; }
+.gallery-item { position: relative; flex: none; }
+.gallery-item image { width: 126rpx; height: 100rpx; border-radius: 16rpx; }
+.gallery-item button { position: absolute; right: -6rpx; top: -8rpx; width: 34rpx; height: 34rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #c14e48; color: #fff; }
+.gallery-item button .hm-icon { width: 20rpx; height: 20rpx; filter: brightness(0) invert(1); }
+.field-label { margin: 26rpx 0 12rpx; font-size: 27rpx; font-weight: 850; }
+.field-label:first-child { margin-top: 0; }
+.field-label.no-margin { margin: 0; }
+.field-help { margin-top: 7rpx; color: #959c95; font-size: 21rpx; }
+.recipe-copy-section .pk-input,
+.recipe-copy-section .pk-textarea { background: #fff; }
+.recipe-name-input { height: 88rpx; padding: 0; border-bottom: 1rpx solid #e4e7e4; border-radius: 0; font-size: 38rpx; font-weight: 900; }
+.pk-textarea.tall { min-height: 320rpx; }
+.raw-content { padding: 8rpx 0; border-radius: 0; font-size: 27rpx; line-height: 1.75; }
+.field-row { min-height: 112rpx; display: flex; align-items: center; justify-content: space-between; gap: 24rpx; }
+.field-row + .field-row { border-top: 1rpx solid #edf0ed; }
+.picker-value { color: #347e45; font-weight: 750; }
+.enabled-row switch { transform: scale(.86); }
+.inline-empty { padding: 20rpx 0; color: #969d96; font-size: 24rpx; }
+.ingredient-editor { margin-top: 16rpx; padding: 18rpx; display: grid; grid-template-columns: 48rpx 2fr 1fr 1fr; gap: 10rpx; border: 1rpx solid #e8ece8; border-radius: 18rpx; background: #fafbfa; }
+.editor-index { width: 42rpx; height: 42rpx; display: flex; align-items: center; justify-content: center; border-radius: 13rpx; background: #4caf50; color: #fff; font-size: 22rpx; font-weight: 800; }
+.ingredient-editor input { height: 56rpx; min-width: 0; padding: 0 12rpx; border-radius: 12rpx; background: #fff; font-size: 23rpx; }
+.ingredient-editor .remark-field { grid-column: 2 / 5; }
+.editor-actions { display: flex; justify-content: flex-end; gap: 16rpx; }
+.ingredient-editor .editor-actions { grid-column: 1 / 5; }
+.editor-actions button { color: #557358; font-size: 20rpx; }
+.editor-actions button[disabled] { color: #c2c7c2; }
+.editor-actions button.danger { color: #b5504b; }
+.step-editor { margin-top: 18rpx; padding: 20rpx 0 28rpx; border-top: 1rpx solid #e8ece8; background: #fff; }
+.step-editor-title { margin-bottom: 16rpx; display: flex; align-items: center; gap: 10rpx; font-weight: 800; }
+.step-editor-title .editor-actions { margin-left: auto; }
+.step-edit-image { width: 100%; height: 380rpx; margin-bottom: 16rpx; border-radius: 18rpx; }
+.step-image-button { width: 100%; height: 110rpx; margin-bottom: 14rpx; display: flex; align-items: center; justify-content: center; gap: 10rpx; border: 2rpx dashed #cbd5cb; border-radius: 18rpx; color: #4a7f53; font-size: 24rpx; }
+.timer-row { margin-top: 14rpx; display: flex; align-items: center; justify-content: space-between; color: #687068; font-size: 23rpx; }
+.timer-row > view { display: flex; align-items: center; gap: 8rpx; }
+.timer-row input { width: 150rpx; height: 58rpx; padding: 0 14rpx; border-radius: 13rpx; background: #fff; text-align: right; }
+.advanced-toggle { display: flex; align-items: center; justify-content: space-between; }
+.advanced-toggle text { color: #477a4d; font-size: 23rpx; }
+.advanced-body { margin-top: 20rpx; padding-top: 18rpx; border-top: 1rpx solid #edf0ed; }
+.source-line { margin-bottom: 12rpx; color: #747b74; font-size: 23rpx; }
+.save-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; padding: 18rpx 30rpx calc(18rpx + env(safe-area-inset-bottom)); background: rgba(255,255,255,.98); box-shadow: 0 -10rpx 34rpx rgba(30,61,36,.08); }
+.save-bar button { width: 100%; }

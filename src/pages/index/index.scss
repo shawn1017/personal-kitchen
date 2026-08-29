@@ -1,0 +1,56 @@
+.kitchen-page { padding: 0 0 calc(250rpx + env(safe-area-inset-bottom)); background: #fff; }
+.kitchen-hero { width: 100%; height: 252rpx; overflow: hidden; background: #f0eadb; }
+.kitchen-hero-image { width: 100%; height: 100%; display: block; }
+.kitchen-shell { position: relative; margin-top: -42rpx; padding-top: 1rpx; border-radius: 42rpx 42rpx 0 0; background: #fff; }
+.kitchen-brand { margin: 30rpx 30rpx 0; display: flex; align-items: center; gap: 20rpx; }
+.kitchen-brand-mark { width: 112rpx; height: 112rpx; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 24rpx; background: #53b85d; }
+.kitchen-brand-mark .hm-icon { width: 68rpx; height: 68rpx; filter: brightness(0) invert(1); }
+.kitchen-brand-copy { min-width: 0; }
+.kitchen-brand-title { font-size: 42rpx; line-height: 1.12; font-weight: 900; letter-spacing: -1rpx; }
+.kitchen-brand-subtitle { margin-top: 10rpx; color: #8b8f8b; font-size: 24rpx; line-height: 1.4; }
+.kitchen-toolbar { min-height: 96rpx; margin-top: 14rpx; padding: 0 28rpx; display: flex; align-items: center; justify-content: space-between; gap: 18rpx; border-bottom: 1rpx solid #edf0ed; }
+.kitchen-toolbar-title { flex: 1; font-size: 31rpx; font-weight: 900; white-space: nowrap; }
+.kitchen-toolbar-actions { display: flex; align-items: center; gap: 12rpx; }
+.manage-entry,
+.add-entry,
+.search-entry { width: auto; min-height: 58rpx; padding: 0 18rpx; flex: none; display: flex; align-items: center; justify-content: center; gap: 8rpx; border-radius: 13rpx; font-size: 23rpx; font-weight: 800; }
+.manage-entry { border: 2rpx solid #4caf50; color: #3c9848; }
+.add-entry { background: #4caf50; color: #fff; }
+.add-entry .hm-icon { filter: brightness(0) invert(1); }
+.search-entry { width: 58rpx; padding: 0; border-radius: 50%; background: #f4f5f4; }
+.search-entry.is-active { background: #e6f4e8; }
+.kitchen-search-wrap { height: 78rpx; margin: 18rpx 28rpx 0; padding: 0 20rpx; display: flex; align-items: center; gap: 14rpx; border-radius: 18rpx; background: #f3f5f3; }
+.kitchen-search { height: 100%; flex: 1; min-width: 0; font-size: 25rpx; }
+.kitchen-body { height: calc(100vh - 518rpx); min-height: 590rpx; display: flex; border-top: 1rpx solid #f1f3f1; }
+.category-side { width: 176rpx; height: 100%; flex: none; background: #f7f8f7; }
+.category-item { position: relative; min-height: 88rpx; padding: 18rpx 20rpx 18rpx 34rpx; display: flex; align-items: center; justify-content: space-between; gap: 10rpx; color: #202520; font-size: 27rpx; }
+.category-item::before { content: ''; position: absolute; left: 0; top: 24rpx; bottom: 24rpx; width: 7rpx; border-radius: 0 8rpx 8rpx 0; background: transparent; }
+.category-item text:last-child { min-width: 42rpx; height: 36rpx; padding: 0 9rpx; display: flex; align-items: center; justify-content: center; border-radius: 18rpx; background: #eef0ee; color: #858b85; font-size: 20rpx; }
+.category-item text:first-child { flex: none; white-space: nowrap; }
+.category-item.is-active { background: #fff; color: #2f8d3d; font-weight: 900; }
+.category-item.is-active::before { background: #4caf50; }
+.category-item.is-active text:last-child { background: #3f9148; color: #fff; }
+.category-manage-link { min-height: 88rpx; padding: 20rpx 18rpx 20rpx 30rpx; display: flex; align-items: center; gap: 10rpx; color: #5e655e; font-size: 23rpx; }
+.recipe-pane { height: 100%; flex: 1; min-width: 0; padding: 0 24rpx 170rpx; }
+.category-side::-webkit-scrollbar,
+.recipe-pane::-webkit-scrollbar { display: none; }
+.kitchen-recipe { position: relative; min-height: 224rpx; padding: 22rpx 0; border-bottom: 1rpx solid #edf0ed; }
+.recipe-tap { display: flex; align-items: flex-start; gap: 20rpx; padding-right: 6rpx; }
+.kitchen-cover { width: 190rpx; height: 190rpx; flex: none; border-radius: 24rpx; }
+.kitchen-copy { flex: 1; min-width: 0; padding-top: 8rpx; }
+.kitchen-name { font-size: 31rpx; line-height: 1.25; font-weight: 900; }
+.kitchen-desc { margin-top: 14rpx; color: #7f857f; font-size: 22rpx; line-height: 1.5; display: -webkit-box; overflow: hidden; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.kitchen-stepper { position: absolute; right: 4rpx; bottom: 28rpx; display: flex; align-items: center; gap: 12rpx; }
+.round-button { width: 52rpx; height: 52rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #eef1ee; }
+.round-button.is-plus { background: #4caf50; }
+.round-button.is-plus .hm-icon { filter: brightness(0) invert(1); }
+.quantity { min-width: 28rpx; text-align: center; font-size: 25rpx; font-weight: 900; }
+.kitchen-empty { margin: 40rpx 0; background: #f7f8f7; border-radius: 24rpx; }
+.kitchen-cart-bar { position: fixed; left: 28rpx; right: 28rpx; bottom: calc(114rpx + env(safe-area-inset-bottom)); z-index: 20; min-height: 104rpx; padding: 14rpx 16rpx 14rpx 20rpx; display: flex; align-items: center; justify-content: space-between; gap: 20rpx; border-radius: 52rpx; background: rgba(255, 255, 255, 0.98); box-shadow: 0 18rpx 58rpx rgba(40, 56, 43, 0.18); }
+.cart-summary { flex: 1; display: flex; align-items: center; gap: 16rpx; }
+.cart-badge { position: relative; width: 68rpx; height: 68rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #f1f2f1; }
+.cart-badge text { position: absolute; right: -2rpx; top: -8rpx; min-width: 30rpx; height: 30rpx; padding: 0 7rpx; display: flex; align-items: center; justify-content: center; border-radius: 15rpx; background: #4caf50; color: #fff; font-size: 18rpx; font-weight: 900; }
+.cart-title { font-size: 26rpx; font-weight: 900; }
+.cart-desc { margin-top: 5rpx; color: #969d96; font-size: 20rpx; }
+.cart-order-button { width: 160rpx; height: 72rpx; display: flex; align-items: center; justify-content: center; border-radius: 36rpx; background: #4caf50; color: #fff; font-size: 26rpx; font-weight: 900; }
+.cart-order-button[disabled] { background: #cfe7d1; color: #fff; }

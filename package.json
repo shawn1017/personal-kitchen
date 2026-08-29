@@ -1,0 +1,42 @@
+{
+  "name": "personal-kitchen",
+  "version": "1.0.0",
+  "private": true,
+  "description": "单用户微信私人厨房与菜谱管理小程序",
+  "scripts": {
+    "dev:weapp": "taro build --type weapp --watch",
+    "build:weapp": "taro build --type weapp",
+    "dev:h5": "taro build --type h5 --watch",
+    "build:h5": "taro build --type h5",
+    "typecheck": "tsc --noEmit",
+    "dev:import": "npm run dev --prefix import-service",
+    "typecheck:import": "npm run typecheck --prefix import-service",
+    "test:import": "npm test --prefix import-service",
+    "build:import": "npm run build --prefix import-service",
+    "check": "npm run typecheck && npm run typecheck:import && npm run test:import && npm run build:weapp && npm run build:h5 && npm run build:import"
+  },
+  "dependencies": {
+    "@tarojs/components": "^4.1.5",
+    "@tarojs/helper": "^4.1.5",
+    "@tarojs/plugin-framework-react": "^4.1.5",
+    "@tarojs/plugin-platform-weapp": "^4.1.5",
+    "@tarojs/react": "^4.1.5",
+    "@tarojs/runtime": "^4.1.5",
+    "@tarojs/shared": "^4.1.5",
+    "@tarojs/taro": "^4.1.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/preset-react": "^7.25.9",
+    "@tarojs/cli": "^4.1.5",
+    "@tarojs/plugin-platform-h5": "^4.2.1",
+    "@tarojs/router": "^4.2.0",
+    "@tarojs/webpack5-runner": "^4.1.5",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "babel-preset-taro": "^4.1.5",
+    "typescript": "^5.6.3"
+  }
+}

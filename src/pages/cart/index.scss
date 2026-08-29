@@ -1,0 +1,22 @@
+.cart-page { padding-bottom: calc(180rpx + env(safe-area-inset-bottom)); }
+.cart-head { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; }
+.cart-head > view { flex: 1; min-width: 0; }
+.cart-head .pk-title { white-space: nowrap; }
+.clear-cart { width: auto; flex: none; padding: 0 10rpx; color: #c14e48; font-size: 25rpx; }
+.cart-empty { margin-top: 40rpx; }
+.empty-go { width: 220rpx; margin: 36rpx auto 0; }
+.cart-list { margin-top: 28rpx; }
+.cart-line { margin-bottom: 18rpx; padding: 18rpx; display: flex; gap: 20rpx; }
+.cart-cover { width: 150rpx; height: 138rpx; flex: none; border-radius: 20rpx; }
+.cart-line-main { position: relative; flex: 1; min-width: 0; }
+.cart-name { padding-right: 80rpx; font-size: 30rpx; font-weight: 800; }
+.remove-line { position: absolute; right: 0; top: 0; color: #b95a55; font-size: 23rpx; }
+.line-stepper { position: absolute; right: 0; bottom: 0; display: flex; align-items: center; gap: 16rpx; }
+.line-stepper button { width: 54rpx; height: 54rpx; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: #eff2ef; font-size: 30rpx; }
+.line-stepper button.is-plus { background: #4caf50; color: #fff; }
+.note-card { margin-top: 24rpx; padding: 24rpx; }
+.section-label { margin-bottom: 16rpx; font-size: 29rpx; font-weight: 800; }
+.cart-submit-bar { position: fixed; left: 28rpx; right: 28rpx; bottom: calc(24rpx + env(safe-area-inset-bottom)); z-index: 20; min-height: 112rpx; padding: 16rpx 18rpx 16rpx 28rpx; display: flex; align-items: center; justify-content: space-between; border-radius: 30rpx; background: rgba(255,255,255,.98); box-shadow: 0 16rpx 48rpx rgba(30,61,36,.14); }
+.submit-label { color: #8c938c; font-size: 22rpx; }
+.submit-count { margin-top: 6rpx; font-size: 32rpx; font-weight: 800; }
+.submit-order { width: 230rpx; }

@@ -1,0 +1,105 @@
+page {
+  min-height: 100vh;
+  background: #ffffff;
+  color: #202520;
+  font-size: 28rpx;
+  font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+view,
+text,
+scroll-view,
+button,
+input,
+textarea,
+picker,
+image,
+switch {
+  box-sizing: border-box;
+}
+
+button {
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+  background: transparent;
+  border-radius: 0;
+}
+
+button::after { border: 0; }
+
+.pk-page {
+  min-height: 100vh;
+  padding: 28rpx 28rpx calc(150rpx + env(safe-area-inset-bottom));
+}
+
+.pk-title {
+  font-size: 48rpx;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: -1rpx;
+}
+
+.pk-subtitle {
+  margin-top: 10rpx;
+  color: #7a817a;
+  font-size: 26rpx;
+}
+
+.pk-card {
+  background: #ffffff;
+  border: 1rpx solid #e7ebe7;
+  border-radius: 24rpx;
+  box-shadow: 0 8rpx 24rpx rgba(31, 65, 38, 0.045);
+}
+
+.pk-primary,
+.pk-secondary,
+.pk-danger,
+.pk-ghost {
+  min-height: 76rpx;
+  padding: 0 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22rpx;
+  font-size: 27rpx;
+  font-weight: 700;
+}
+
+.pk-primary { background: #55b95d; color: #fff; }
+.pk-secondary { background: #edf7ef; color: #347e45; }
+.pk-danger { background: #fff0ef; color: #c14e48; }
+.pk-ghost { background: #f2f4f2; color: #565d56; }
+.pk-primary[disabled] { background: #dce2dc; color: #99a199; }
+.button-hover { opacity: 0.78; transform: scale(0.99); }
+
+.pk-input,
+.pk-textarea {
+  width: 100%;
+  border-radius: 18rpx;
+  background: #f4f6f4;
+  color: #202520;
+  font-size: 27rpx;
+}
+
+.pk-input { height: 76rpx; padding: 0 24rpx; }
+.pk-textarea { min-height: 180rpx; padding: 22rpx 24rpx; line-height: 1.55; }
+
+.pk-empty {
+  padding: 90rpx 34rpx;
+  text-align: center;
+  color: #7a817a;
+}
+
+.pk-empty-title { color: #303630; font-size: 32rpx; font-weight: 750; }
+.pk-empty-desc { margin-top: 12rpx; line-height: 1.5; }
+
+.pk-cover-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #e8f5e9, #d6ebd8);
+  color: #3e8e50;
+  font-size: 42rpx;
+  font-weight: 800;
+}
