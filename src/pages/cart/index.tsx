@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Taro, { useDidShow } from '@tarojs/taro'
-import { Button, Image, Textarea, View } from '@tarojs/components'
+import { Button, Textarea, View } from '@tarojs/components'
+import PersistedImage from '@/components/PersistedImage'
 import { CartItemView } from '@/types'
 import { calcTotalCount, clearCart, getCartView, removeCartItem, updateCartItemQuantity } from '@/utils/cart'
 import { createOrder } from '@/utils/orders'
@@ -45,7 +46,7 @@ export default function CartPage() {
           <View className='cart-list'>
             {items.map((item) => item.recipe && (
               <View key={item.recipeId} className='cart-line pk-card'>
-                {item.recipe.coverImage ? <Image className='cart-cover' src={item.recipe.coverImage} mode='aspectFill' /> : <View className='cart-cover pk-cover-fallback'>{item.recipe.name.slice(0, 1)}</View>}
+                {item.recipe.coverImage ? <PersistedImage className='cart-cover' src={item.recipe.coverImage} mode='aspectFill' /> : <View className='cart-cover pk-cover-fallback'>{item.recipe.name.slice(0, 1)}</View>}
                 <View className='cart-line-main'>
                   <View className='cart-name'>{item.recipe.name}</View>
                   <Button className='remove-line' onClick={() => { removeCartItem(item.recipeId); refresh() }}>删除</Button>

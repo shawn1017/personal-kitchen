@@ -2,7 +2,7 @@
 
 一个仅供个人使用的微信菜谱管理小程序：把公开的小红书 / 下厨房菜谱链接整理成可编辑草稿，保存到本地菜谱库，再完成“厨房点菜 → 生成订单 → 标记完成 → 再来一单”的闭环。
 
-本项目基于 MIT License 的 [HeartMeal](https://github.com/Sky-Sheepfold/HeartMeal) 二次开发，保留原项目 `LICENSE` 和署名。产品已经移除多用户、价格、支付、用餐人数及社交语义，业务数据全部 local-first；唯一后端是无业务数据库的公开链接 Import Service。
+本项目基于 MIT License 的 [HeartMeal](https://github.com/Sky-Sheepfold/HeartMeal) 二次开发，保留原项目 `LICENSE` 和署名。产品已经移除多用户、价格、支付、用餐人数及社交语义，业务数据全部 local-first；唯一后端是无业务数据库的公开链接 Import Service。Vercel + Supabase 部署中，Supabase 只保存 10 分钟有效的图片中转令牌，不保存菜谱、菜单、订单或用户资料。
 
 ## 已实现
 
@@ -118,6 +118,22 @@ npm run check
 - `XiaohongshuProvider` 保留公开标题、原文和图片，再按明确编号尝试拆分步骤。
 - 图片中转只接受本次解析时登记的短期 token，不接受调用方提供任意图片 URL。
 - 没有账号系统、业务数据库、多租户或云端同步。
+
+## Vercel + Supabase Free 部署
+
+1. 在 Supabase Free 项目 SQL Editor 执行 `supabase/migrations/20260829000000_import_relay_tokens.sql`。该表开启 RLS，并撤销 `anon` / `authenticated` 权限，只有服务端 service role 可访问。
+2. 在 Vercel 项目设置以下环境变量（Production、Preview、Development）：
+
+```dotenv
+TARO_APP_IMPORT_API_BASE=same-origin
+SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVER_ONLY_SECRET
+```
+
+3. Vercel 使用根目录的 `vercel.json`：构建 H5 到 `dist-h5/`，并把 `api/` 下的健康检查、菜谱导入和图片中转入口部署为 Serverless Functions。
+4. 部署完成后检查 `/`、`/health` 和 `/api/health`；健康检查中的 `relayStore` 应为 `supabase`。
+
+`SUPABASE_SERVICE_ROLE_KEY` 绝不能写入源码、前端环境变量或提交到 Git。H5 仍以浏览器 Local Storage 为业务数据源；Supabase 项目暂停、删除或不可用时，不会影响已保存的本地菜谱和订单，只会使新导入图片暂时退回原始地址。
 
 生产启动：
 

@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import Taro, { useDidShow } from '@tarojs/taro'
-import { Button, Image, Picker, Text, View } from '@tarojs/components'
+import { Button, Picker, Text, View } from '@tarojs/components'
 import HeartMealIcon from '@/components/Icon'
+import PersistedImage from '@/components/PersistedImage'
 import { Order, OrderStatus } from '@/types'
 import { completeOrder, getOrders, reorder } from '@/utils/orders'
 import './index.scss'
@@ -54,7 +55,7 @@ export default function OrdersPage() {
             <View className='order-top'><View><View className='order-date'>{formatDate(order.createdAt)}</View><View className='order-time'>{formatTime(order.createdAt)} · {order.items.reduce((sum, item) => sum + item.quantity, 0)} 件</View></View><View className={`status ${order.status}`}>{order.status === 'pending' ? '待做' : '已完成'}</View></View>
             <View className='order-items'>{order.items.map((item) => (
               <View key={`${order.id}_${item.recipeId}`} className='order-item'>
-                {item.recipeImage ? <Image className='order-thumb' src={item.recipeImage} mode='aspectFill' /> : <View className='order-thumb pk-cover-fallback'>{item.recipeName.slice(0, 1)}</View>}
+                {item.recipeImage ? <PersistedImage className='order-thumb' src={item.recipeImage} mode='aspectFill' /> : <View className='order-thumb pk-cover-fallback'>{item.recipeName.slice(0, 1)}</View>}
                 <Text>{item.recipeName}</Text><Text>x{item.quantity}</Text>
               </View>
             ))}</View>

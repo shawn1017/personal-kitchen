@@ -1,0 +1,23 @@
+# Dependencies and local build output
+node_modules/
+**/node_modules/
+dist/
+dist-h5/
+build/
+.temp/
+.taro/
+.cache/
+
+# Local credentials and machine state
+.env
+.env.*
+!.env.example
+.git/
+.vercel/
+*.log
+
+# Private migration/source material is not part of the web deployment
+migration-data/
+design-evidence/
+docs/
+.codex/

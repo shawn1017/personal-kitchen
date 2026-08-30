@@ -43,21 +43,47 @@ export function detectSourcePlatform(url: string): DetectedSourcePlatform {
   return 'unknown'
 }
 
-function getApiBase(): string {
-  return String(process.env.TARO_APP_IMPORT_API_BASE || '').replace(/\/$/, '')
+export function getImportApiBase(): string {
+  const configured = String(process.env.TARO_APP_IMPORT_API_BASE || '').trim()
+  if (configured !== 'same-origin') return configured.replace(/\/$/, '')
+  if (Taro.getEnv() !== Taro.ENV_TYPE.WEB || typeof window === 'undefined') return ''
+  return window.location.origin
+}
+
+function isGatewayApiBase(apiBase: string): boolean {
+  try {
+    const parsed = new URL(apiBase)
+    const pathname = parsed.pathname.replace(/\/$/, '')
+    return parsed.protocol === 'https:' &&
+      !parsed.username &&
+      !parsed.password &&
+      !parsed.search &&
+      !parsed.hash &&
+      parsed.hostname.toLowerCase().endsWith('.supabase.co') &&
+      /^\/functions\/v1\/[^/]+$/.test(pathname)
+  } catch {
+    return false
+  }
+}
+
+export function isGatewayImportService(): boolean {
+  return isGatewayApiBase(getImportApiBase())
 }
 
 export function isImportServiceConfigured(): boolean {
-  return Boolean(getApiBase())
+  return Boolean(getImportApiBase())
 }
 
 function cancelledResult(): ImportRecipeResponse {
   return { success: false, errorCode: 'CANCELLED', message: '已取消导入，没有保存任何内容。' }
 }
 
-export async function importRecipe(url: string, signal?: ImportSignal): Promise<ImportRecipeResponse> {
-  const apiBase = getApiBase()
+export async function importRecipe(url: string, accessKeyInput = '', signal?: ImportSignal): Promise<ImportRecipeResponse> {
+  const apiBase = getImportApiBase()
   if (!apiBase) return { success: false, errorCode: 'SERVICE_UNAVAILABLE', message: '尚未配置导入服务地址，可粘贴原文继续创建草稿。' }
+  const gatewayService = isGatewayApiBase(apiBase)
+  const accessKey = gatewayService ? accessKeyInput.trim() : ''
+  if (gatewayService && !accessKey) return { success: false, errorCode: 'ACCESS_DENIED', message: '请先填写解析服务访问码。' }
   if (signal?.aborted) return cancelledResult()
 
   let abortRequest: () => void = () => undefined
@@ -75,7 +101,10 @@ export async function importRecipe(url: string, signal?: ImportSignal): Promise<
       method: 'POST',
       data: { url },
       timeout: IMPORT_TIMEOUT_MS,
-      header: { 'content-type': 'application/json' }
+      header: {
+        'content-type': 'application/json',
+        ...(accessKey ? { 'x-kitchen-access': accessKey } : {})
+      }
     })
     abortRequest = () => requestTask.abort?.()
     const response = await Promise.race([requestTask, cancelled])

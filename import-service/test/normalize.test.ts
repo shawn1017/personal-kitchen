@@ -60,12 +60,13 @@ test('小红书失效页不会被误判为导入成功', () => {
   )
 })
 
-test('图片中转只接受服务端登记的短期 token', () => {
+test('图片中转只接受服务端登记的短期 token', async () => {
   const draft = parseXiaohongshu('<meta property="og:title" content="测试"><meta property="og:image" content="https://img.example.com/a.jpg">', 'https://www.xiaohongshu.com/explore/1').draft
-  const relayed = relayDraftImages(draft, 'https://service.example.com')
+  const relayed = await relayDraftImages(draft, 'https://service.example.com')
   const token = relayed.coverImage?.split('/').pop() || ''
-  assert.equal(consumeRelayToken(token), 'https://img.example.com/a.jpg')
-  assert.equal(consumeRelayToken('unregistered'), null)
+  assert.equal(await consumeRelayToken(token), 'https://img.example.com/a.jpg')
+  assert.equal(await consumeRelayToken(token), 'https://img.example.com/a.jpg')
+  assert.equal(await consumeRelayToken('unregistered'), null)
 })
 
 test('登录和滑动验证页面必须进入降级，不能当菜谱成功', () => {

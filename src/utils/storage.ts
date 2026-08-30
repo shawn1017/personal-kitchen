@@ -21,6 +21,13 @@ function decodeValue<T>(value: unknown, defaultValue: T): T {
   }
   return value as T
 }
+
+function decodeValueStrict<T>(value: unknown, defaultValue: T): T {
+  if (value === undefined || value === null || value === '') return defaultValue
+  if (typeof value === 'string') return JSON.parse(value) as T
+  return value as T
+}
+
 export function getStorage<T>(key: string, defaultValue: T): T {
   try {
     return decodeValue(Taro.getStorageSync<unknown>(key), defaultValue)
@@ -28,6 +35,10 @@ export function getStorage<T>(key: string, defaultValue: T): T {
     console.warn(`[storage] read failed: ${key}`, error)
     return defaultValue
   }
+}
+
+export function getStorageStrict<T>(key: string, defaultValue: T): T {
+  return decodeValueStrict(Taro.getStorageSync<unknown>(key), defaultValue)
 }
 
 export function setStorage<T>(key: string, value: T): boolean {
@@ -40,11 +51,13 @@ export function setStorage<T>(key: string, value: T): boolean {
   }
 }
 
-export function removeStorage(key: string): void {
+export function removeStorage(key: string): boolean {
   try {
     Taro.removeStorageSync(key)
+    return true
   } catch (error) {
     console.warn(`[storage] remove failed: ${key}`, error)
+    return false
   }
 }
 
@@ -54,4 +67,7 @@ export function hasStorageKey(key: string): boolean {
   } catch {
     return false
   }
+}
+export function hasStorageKeyStrict(key: string): boolean {
+  return Taro.getStorageInfoSync().keys.includes(key)
 }

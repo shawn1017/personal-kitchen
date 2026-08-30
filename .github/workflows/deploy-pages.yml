@@ -29,10 +29,17 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci
+          npm ci --prefix import-service
+
+      - name: Verify source and gateway
+        run: npm run verify
 
       - name: Build H5
         run: npm run build:h5
+        env:
+          TARO_APP_IMPORT_API_BASE: https://fclhapemspdimjixbjzt.supabase.co/functions/v1/vercel-gateway
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

@@ -11,9 +11,14 @@
     "typecheck": "tsc --noEmit",
     "dev:import": "npm run dev --prefix import-service",
     "typecheck:import": "npm run typecheck --prefix import-service",
+    "typecheck:gateway": "npm run typecheck:gateway --prefix import-service",
     "test:import": "npm test --prefix import-service",
     "build:import": "npm run build --prefix import-service",
-    "check": "npm run typecheck && npm run typecheck:import && npm run test:import && npm run build:weapp && npm run build:h5 && npm run build:import"
+    "extract:wechat-cache-images": "node scripts/extract-wechat-cache-images.mjs",
+    "verify:chef-migration": "node scripts/verify-chef-migration.mjs",
+    "build:chef-migration": "node scripts/build-chef-migration.mjs",
+    "verify": "npm run typecheck && npm run typecheck:import && npm run typecheck:gateway && npm run test:import",
+    "check": "npm run verify && npm run build:weapp && npm run build:h5 && npm run build:import"
   },
   "dependencies": {
     "@tarojs/components": "^4.1.5",

@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
 import Taro, { useDidShow, useRouter } from '@tarojs/taro'
-import { Button, Image, Input, Text, View } from '@tarojs/components'
+import { Button, Input, Text, View } from '@tarojs/components'
 import { HeartMealIconName } from '@/assets/icons'
 import HeartMealIcon from '@/components/Icon'
+import PersistedImage from '@/components/PersistedImage'
 import { Category, Recipe } from '@/types'
 import { getCategories } from '@/utils/categories'
 import { removeCartItem } from '@/utils/cart'
+import { schedulePersistedImageGarbageCollection } from '@/utils/images'
 import { deleteRecipe, getRecipes, moveRecipe, setAllRecipesEnabled, updateRecipe } from '@/utils/recipes'
 import './index.scss'
 
@@ -41,6 +43,7 @@ export default function RecipeManagePage() {
       try {
         const nextRecipes = deleteRecipe(recipe.id)
         removeCartItem(recipe.id)
+        schedulePersistedImageGarbageCollection()
         setRecipes(nextRecipes)
       } catch {
         Taro.showToast({ title: '删除失败，请检查存储空间', icon: 'none' })
@@ -66,7 +69,7 @@ export default function RecipeManagePage() {
           {!filtered.length ? <View className='pk-empty manage-empty'><View className='pk-empty-title'>还没有菜谱</View><View className='pk-empty-desc'>点击“添加菜谱”开始建立你的厨房</View></View> : (
             <View className='manage-list'>{filtered.map((recipe, index) => (
               <View key={recipe.id} className='manage-card'>
-                {recipe.coverImage ? <Image className='manage-cover' src={recipe.coverImage} mode='aspectFill' /> : <View className='manage-cover pk-cover-fallback'>{recipe.name.slice(0, 1)}</View>}
+                {recipe.coverImage ? <PersistedImage className='manage-cover' src={recipe.coverImage} mode='aspectFill' /> : <View className='manage-cover pk-cover-fallback'>{recipe.name.slice(0, 1)}</View>}
                 <View className='manage-main'>
                   <View className='manage-name'>{recipe.name}</View>
                   <View className={`manage-status ${recipe.enabled ? 'enabled' : ''}`}>{recipe.enabled ? '上架中' : '已下架'}</View>

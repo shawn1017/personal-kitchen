@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Taro, { useDidShow, useRouter } from '@tarojs/taro'
-import { Button, Image, Input, Picker, Switch, Text, Textarea, View } from '@tarojs/components'
+import { Button, Input, Picker, Switch, Text, Textarea, View } from '@tarojs/components'
 import HeartMealIcon from '@/components/Icon'
+import PersistedImage from '@/components/PersistedImage'
 import { Category, ImportedRecipeDraft, Recipe, RecipeIngredient, RecipeSourceMeta, RecipeStep } from '@/types'
+import { runWithConcurrency } from '@/utils/async'
 import { getCategories } from '@/utils/categories'
-import { chooseAndPersistImage, persistImage } from '@/utils/images'
+import { chooseAndPersistImage, deletePersistedImages, isPersistedImageReference, persistImage, schedulePersistedImageGarbageCollection } from '@/utils/images'
 import { createId } from '@/utils/id'
 import { createRecipe, getRecipe, updateRecipe } from '@/utils/recipes'
 import { STORAGE_KEYS, getStorage, removeStorage } from '@/utils/storage'
@@ -54,12 +56,31 @@ export default function RecipeEditPage() {
   const [form, setForm] = useState<RecipeForm>(emptyForm)
   const [loaded, setLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [imagePending, setImagePending] = useState(false)
+  const imagePendingRef = useRef(false)
+  const mountedRef = useRef(true)
+  const imageSaveControllerRef = useRef<AbortController | null>(null)
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [ingredientsOpen, setIngredientsOpen] = useState(true)
   const [stepsOpen, setStepsOpen] = useState(true)
 
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      const saveWasActive = imageSaveControllerRef.current !== null
+      mountedRef.current = false
+      imagePendingRef.current = false
+      imageSaveControllerRef.current?.abort()
+      imageSaveControllerRef.current = null
+      if (redirectTimerRef.current !== null) clearTimeout(redirectTimerRef.current)
+      redirectTimerRef.current = null
+      if (saveWasActive) Taro.hideLoading()
+    }
+  }, [])
+
   useDidShow(() => {
-    if (loaded) return
+    if (!mountedRef.current || loaded) return
     const nextCategories = getCategories().filter((item) => item.enabled)
     setCategories(nextCategories)
     if (recipeId) {
@@ -74,7 +95,10 @@ export default function RecipeEditPage() {
     setLoaded(true)
   })
 
-  const patchForm = (patch: Partial<RecipeForm>) => setForm((current) => ({ ...current, ...patch }))
+  const patchForm = (patch: Partial<RecipeForm>) => {
+    if (!mountedRef.current || saving) return
+    setForm((current) => ({ ...current, ...patch }))
+  }
   const updateIngredient = (index: number, patch: Partial<RecipeIngredient>) => patchForm({ ingredients: form.ingredients.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item) })
   const updateStep = (index: number, patch: Partial<RecipeStep>) => patchForm({ steps: form.steps.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item) })
   const move = <T,>(items: T[], index: number, direction: -1 | 1): T[] => {
@@ -84,51 +108,116 @@ export default function RecipeEditPage() {
     return next
   }
 
-  const chooseCover = async () => {
-    try { const image = await chooseAndPersistImage(); if (image) patchForm({ coverImage: image }) } catch { return }
+  const selectAndApplyImage = async (apply: (image: string) => void) => {
+    if (!mountedRef.current || imagePendingRef.current || saving) return
+    imagePendingRef.current = true
+    setImagePending(true)
+    try {
+      const image = await chooseAndPersistImage()
+      if (!mountedRef.current) return
+      if (!image) return Taro.showToast({ title: '图片保存失败，请选择 4 MB 内的图片', icon: 'none' })
+      apply(image)
+    } catch {
+      if (mountedRef.current) Taro.showToast({ title: '图片选择或保存失败', icon: 'none' })
+    } finally {
+      imagePendingRef.current = false
+      if (mountedRef.current) setImagePending(false)
+    }
   }
-  const addGalleryImage = async () => {
-    try { const image = await chooseAndPersistImage(); if (image) patchForm({ galleryImages: form.galleryImages.concat(image) }) } catch { return }
-  }
+  const chooseCover = async () => selectAndApplyImage((image) => setForm((current) => ({ ...current, coverImage: image })))
+  const addGalleryImage = async () => selectAndApplyImage((image) => setForm((current) => ({ ...current, galleryImages: current.galleryImages.concat(image) })))
   const chooseStepImage = async (index: number) => {
-    try { const image = await chooseAndPersistImage(); if (image) updateStep(index, { image }) } catch { return }
+    const stepId = form.steps[index]?.id
+    if (!stepId) return
+    await selectAndApplyImage((image) => setForm((current) => ({
+      ...current,
+      steps: current.steps.map((step) => step.id === stepId ? { ...step, image } : step)
+    })))
   }
 
   const save = async () => {
-    const name = form.name.trim()
+    if (!mountedRef.current) return
+    const formSnapshot = form
+    const name = formSnapshot.name.trim()
     if (!name) return Taro.showToast({ title: '请填写菜谱名称', icon: 'none' })
-    if (!form.categoryId) return Taro.showToast({ title: '请选择所属分类', icon: 'none' })
-    if (saving) return
+    if (!formSnapshot.categoryId) return Taro.showToast({ title: '请选择所属分类', icon: 'none' })
+    if (imagePendingRef.current) return Taro.showToast({ title: '图片正在保存，请稍候', icon: 'none' })
+    if (saving || imageSaveControllerRef.current) return
     setSaving(true)
     Taro.showLoading({ title: '正在保存' })
+    const imageSaveController = new AbortController()
+    imageSaveControllerRef.current = imageSaveController
+    const imageSaveTimeout = setTimeout(() => imageSaveController.abort(), 30_000)
+    const createdImages = new Set<string>()
+    let committed = false
     try {
-      let failedRemoteImages = 0
-      const persistTracked = async (path: string): Promise<string> => {
-        const saved = await persistImage(path)
-        if (/^https?:\/\//i.test(path) && saved === path) { failedRemoteImages += 1; return '' }
-        return saved
+      const persistedImages = new Map<string, Promise<string>>()
+      const persistTracked = (path: string): Promise<string> => {
+        let pending = persistedImages.get(path)
+        if (!pending) {
+          pending = persistImage(path, imageSaveController.signal).then((saved) => {
+            if (!saved || (/^https?:\/\//i.test(path) && saved === path)) {
+              throw new Error('图片没有成功保存到本机')
+            }
+            if (saved !== path && isPersistedImageReference(saved)) createdImages.add(saved)
+            return saved
+          })
+          persistedImages.set(path, pending)
+        }
+        return pending
       }
-      const coverImage = form.coverImage ? (await persistTracked(form.coverImage) || undefined) : undefined
-      const galleryImages = (await Promise.all(form.galleryImages.map(persistTracked))).filter(Boolean)
-      const steps = await Promise.all(form.steps.map(async (step, index) => ({ ...step, sort: index, image: step.image ? (await persistTracked(step.image) || undefined) : undefined })))
+      const imagePaths = [formSnapshot.coverImage, ...formSnapshot.galleryImages, ...formSnapshot.steps.map((step) => step.image)].filter((path): path is string => Boolean(path))
+      await runWithConcurrency(Array.from(new Set(imagePaths)), 3, async (path) => { await persistTracked(path) })
+      if (imageSaveController.signal.aborted) {
+        throw imageSaveController.signal.reason instanceof Error
+          ? imageSaveController.signal.reason
+          : new DOMException('Aborted', 'AbortError')
+      }
+      clearTimeout(imageSaveTimeout)
+      const coverImage = formSnapshot.coverImage ? (await persistTracked(formSnapshot.coverImage) || undefined) : undefined
+      const galleryImages = (await Promise.all(formSnapshot.galleryImages.map(persistTracked))).filter(Boolean)
+      const steps = await Promise.all(formSnapshot.steps.map(async (step, index) => ({ ...step, sort: index, image: step.image ? (await persistTracked(step.image) || undefined) : undefined })))
       const input = {
-        name, categoryId: form.categoryId, coverImage, galleryImages,
-        description: form.description.trim(), tips: form.tips.trim(), enabled: form.enabled,
-        ingredients: form.ingredients.filter((item) => item.name.trim()).map((item, index) => ({ ...item, name: item.name.trim(), sort: index })),
+        name, categoryId: formSnapshot.categoryId, coverImage, galleryImages,
+        description: formSnapshot.description.trim(), tips: formSnapshot.tips.trim(), enabled: formSnapshot.enabled,
+        ingredients: formSnapshot.ingredients.filter((item) => item.name.trim()).map((item, index) => ({ ...item, name: item.name.trim(), sort: index })),
         steps: steps.filter((item) => item.text.trim() || item.image).map((item, index) => ({ ...item, sort: index })),
-        source: { ...form.source, sourceUrl: form.source.sourceUrl?.trim() }
+        source: { ...formSnapshot.source, sourceUrl: formSnapshot.source.sourceUrl?.trim() }
       }
-      if (recipeId) updateRecipe(recipeId, input)
-      else createRecipe(input)
-      if (fromDraft) removeStorage(STORAGE_KEYS.IMPORT_DRAFT)
-      Taro.hideLoading()
-      Taro.showToast({ title: failedRemoteImages ? '已保存，部分图片需补充' : (recipeId ? '菜谱已修改' : '菜谱已保存'), icon: failedRemoteImages ? 'none' : 'success' })
-      setTimeout(() => Taro.redirectTo({ url: '/pages/recipe-manage/index' }), 450)
+      if (!mountedRef.current || imageSaveController.signal.aborted) {
+        throw imageSaveController.signal.reason instanceof Error
+          ? imageSaveController.signal.reason
+          : new DOMException('Aborted', 'AbortError')
+      }
+      if (recipeId) {
+        const updated = updateRecipe(recipeId, input)
+        if (!updated) throw new Error('菜谱已不存在')
+      } else createRecipe(input)
+      committed = true
     } catch {
-      Taro.hideLoading()
-      Taro.showToast({ title: '保存失败，请检查存储空间', icon: 'none' })
-      setSaving(false)
+      const imageSaveTimedOut = imageSaveController.signal.aborted
+      imageSaveController.abort()
+      if (!committed) await deletePersistedImages(createdImages).catch(() => undefined)
+      if (mountedRef.current) {
+        Taro.hideLoading()
+        Taro.showToast({ title: imageSaveTimedOut ? '图片保存超时，请重试' : '保存失败，请检查图片或存储空间', icon: 'none' })
+        setSaving(false)
+      }
+      return
+    } finally {
+      clearTimeout(imageSaveTimeout)
+      if (imageSaveControllerRef.current === imageSaveController) imageSaveControllerRef.current = null
     }
+    if (!mountedRef.current) return
+    if (fromDraft) removeStorage(STORAGE_KEYS.IMPORT_DRAFT)
+    schedulePersistedImageGarbageCollection()
+    Taro.hideLoading()
+    Taro.showToast({ title: recipeId ? '菜谱已修改' : '菜谱已保存', icon: 'success' })
+    if (!mountedRef.current) return
+    redirectTimerRef.current = setTimeout(() => {
+      redirectTimerRef.current = null
+      if (mountedRef.current) Taro.redirectTo({ url: '/pages/recipe-manage/index' })
+    }, 450)
   }
 
   const categoryIndex = Math.max(0, categories.findIndex((item) => item.id === form.categoryId))
@@ -145,14 +234,14 @@ export default function RecipeEditPage() {
         <View className='section-title'>封面</View>
         <View className='cover-editor'>
           <View className='edit-cover-wrap'>
-            {form.coverImage ? <Image className='edit-cover' src={form.coverImage} mode='aspectFill' /> : <View className='edit-cover pk-cover-fallback'>封面</View>}
+            {form.coverImage ? <PersistedImage className='edit-cover' src={form.coverImage} mode='aspectFill' /> : <View className='edit-cover pk-cover-fallback'>封面</View>}
             {form.coverImage && <Button className='remove-cover' onClick={() => patchForm({ coverImage: undefined })}><HeartMealIcon name='delete' size='sm' /></Button>}
             {form.coverImage && <View className='cover-label'>当前封面</View>}
           </View>
-          <Button className='cover-upload' onClick={chooseCover}><HeartMealIcon name='image' size='lg' /><Text>上传图片</Text></Button>
+          <Button className='cover-upload' disabled={imagePending || saving} onClick={chooseCover}><HeartMealIcon name='image' size='lg' /><Text>{imagePending ? '图片保存中' : '上传图片'}</Text></Button>
         </View>
-        <View className='cover-actions'><Button onClick={addGalleryImage}><HeartMealIcon name='plus' size='sm' />加入图库</Button>{visibleGalleryImages.length > 0 && <View>点击下方图片即可设为封面</View>}</View>
-        {visibleGalleryImages.length > 0 && <View className='gallery-strip'>{visibleGalleryImages.map(({ image, index }) => <View key={`${image}_${index}`} className='gallery-item'><Image src={image} mode='aspectFill' onClick={() => patchForm({ coverImage: image })} /><Button onClick={() => patchForm({ galleryImages: form.galleryImages.filter((_, itemIndex) => itemIndex !== index) })}><HeartMealIcon name='delete' size='sm' /></Button></View>)}</View>}
+        <View className='cover-actions'><Button disabled={imagePending || saving} onClick={addGalleryImage}><HeartMealIcon name='plus' size='sm' />加入图库</Button>{visibleGalleryImages.length > 0 && <View>点击下方图片即可设为封面</View>}</View>
+        {visibleGalleryImages.length > 0 && <View className='gallery-strip'>{visibleGalleryImages.map(({ image, index }) => <View key={`${image}_${index}`} className='gallery-item'><PersistedImage src={image} mode='aspectFill' onClick={() => patchForm({ coverImage: image })} /><Button onClick={() => patchForm({ galleryImages: form.galleryImages.filter((_, itemIndex) => itemIndex !== index) })}><HeartMealIcon name='delete' size='sm' /></Button></View>)}</View>}
       </View>
 
       <View className='edit-section pk-card recipe-copy-section'><View className='field-label'>菜谱名称 *</View><Input className='pk-input recipe-name-input' value={form.name} maxlength={50} placeholder='例如：啤酒鸭' onInput={(event) => patchForm({ name: event.detail.value })} /><View className='field-label'>原始文案 / 菜谱介绍</View><Textarea className='pk-textarea tall raw-content' value={form.description} maxlength={5000} placeholder='介绍这道菜，导入内容的原始正文也会放在这里' onInput={(event) => patchForm({ description: event.detail.value })} /></View>
@@ -177,7 +266,7 @@ export default function RecipeEditPage() {
         {stepsOpen && !form.steps.length && <View className='inline-empty'>还没有步骤，可以逐步补充说明和图片</View>}
         {stepsOpen && form.steps.map((step, index) => <View key={step.id} className='step-editor'>
           <View className='step-editor-title'><View className='editor-index'>{index + 1}</View><Text>步骤 {index + 1}</Text><View className='editor-actions'><Button disabled={index === 0} onClick={() => patchForm({ steps: move(form.steps, index, -1) })}>上移</Button><Button disabled={index === form.steps.length - 1} onClick={() => patchForm({ steps: move(form.steps, index, 1) })}>下移</Button><Button className='danger' onClick={() => patchForm({ steps: form.steps.filter((_, itemIndex) => itemIndex !== index) })}>删除</Button></View></View>
-          {step.image ? <Image className='step-edit-image' src={step.image} mode='aspectFill' onClick={() => chooseStepImage(index)} /> : <Button className='step-image-button' onClick={() => chooseStepImage(index)}><HeartMealIcon name='image' size='md' />添加步骤图片</Button>}
+          {step.image ? <PersistedImage className='step-edit-image' src={step.image} mode='aspectFill' onClick={() => chooseStepImage(index)} /> : <Button className='step-image-button' disabled={imagePending || saving} onClick={() => chooseStepImage(index)}><HeartMealIcon name='image' size='md' />添加步骤图片</Button>}
           <Textarea className='pk-textarea' value={step.text} maxlength={1000} placeholder='写下这一步怎么做' onInput={(event) => updateStep(index, { text: event.detail.value })} />
           <View className='timer-row'><View><HeartMealIcon name='clock' size='sm' /><Text>计时（分钟，可选）</Text></View><Input type='number' value={step.timerSeconds ? String(Math.round(step.timerSeconds / 60)) : ''} placeholder='0' onInput={(event) => updateStep(index, { timerSeconds: Math.max(0, Number(event.detail.value || 0)) * 60 || undefined })} /></View>
         </View>)}
@@ -187,7 +276,7 @@ export default function RecipeEditPage() {
 
       <View className='edit-section pk-card advanced-section'><View className='advanced-toggle' onClick={() => setAdvancedOpen(!advancedOpen)}><View className='section-title'>高级设置 / 来源信息</View><Text>{advancedOpen ? '收起' : '展开'}</Text></View>{advancedOpen && <View className='advanced-body'><View className='source-line'>来源平台：{form.source.platform}</View>{form.source.authorName && <View className='source-line'>作者：{form.source.authorName}</View>}<View className='field-label'>原始链接</View><Input className='pk-input' value={form.source.sourceUrl || ''} placeholder='https://...' onInput={(event) => patchForm({ source: { ...form.source, sourceUrl: event.detail.value } })} />{form.source.importedAt && <View className='source-line'>导入时间：{new Date(form.source.importedAt).toLocaleString('zh-CN')}</View>}</View>}</View>
 
-      <View className='save-bar'><Button className='pk-primary' loading={saving} onClick={save}>{recipeId ? '修改菜谱' : '保存菜谱'}</Button></View>
+      <View className='save-bar'><Button className='pk-primary' loading={saving} disabled={imagePending || saving} onClick={save}>{imagePending ? '图片保存中…' : recipeId ? '修改菜谱' : '保存菜谱'}</Button></View>
     </View>
   )
 }

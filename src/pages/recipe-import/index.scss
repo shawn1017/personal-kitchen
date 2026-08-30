@@ -1,5 +1,5 @@
 .import-page { padding-bottom: 60rpx; }
-.import-card, .progress-card, .error-card, .fallback-card, .service-notice { margin-top: 24rpx; padding: 24rpx; }
+.import-card, .progress-card, .error-card, .fallback-card, .service-notice, .gateway-access { margin-top: 24rpx; padding: 24rpx; }
 .field-title { margin-bottom: 14rpx; font-size: 29rpx; font-weight: 820; }
 .platform-hint { margin-top: 12rpx; color: #8b928b; font-size: 22rpx; }
 .platform-hint.xiaohongshu, .platform-hint.xiachufang { color: #347e45; }
@@ -7,6 +7,8 @@
 .import-button { width: 100%; margin-top: 22rpx; }
 .service-notice { border-color: #f0d6b2; background: #fff8ed; color: #80684c; font-size: 23rpx; line-height: 1.6; }
 .service-notice-title { margin-bottom: 6rpx; color: #9b6129; font-size: 28rpx; font-weight: 820; }
+.gateway-access { border-color: #d8e8da; background: #f7fbf7; }
+.gateway-help { margin: -4rpx 0 16rpx; color: #738078; font-size: 22rpx; line-height: 1.55; }
 .progress-summary { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; }
 .progress-title { color: #254d2e; font-size: 30rpx; font-weight: 850; }
 .progress-time { margin-top: 6rpx; color: #849087; font-size: 21rpx; }

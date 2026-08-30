@@ -2,9 +2,22 @@ import { assertPublicDestination, assertSupportedRedirect } from './security.js'
 import { ImportError, Platform } from './types.js'
 
 const MAX_PAGE_BYTES = 2 * 1024 * 1024
-const MAX_IMAGE_BYTES = 8 * 1024 * 1024
+// Keep relayed responses below Vercel Functions' 4.5 MB body limit.
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024
 const MAX_REDIRECTS = 3
 const TIMEOUT_MS = 8000
+const ALLOWED_IMAGE_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/avif',
+  'image/gif'
+])
+
+export function normalizeImageContentType(value: string | null): string | null {
+  const mimeType = String(value || '').split(';', 1)[0].trim().toLowerCase()
+  return ALLOWED_IMAGE_MIME_TYPES.has(mimeType) ? mimeType : null
+}
 
 export function isAccessChallenge(html: string, url: URL): boolean {
   const path = decodeURIComponent(url.pathname).toLowerCase()
@@ -118,8 +131,14 @@ export async function fetchImage(initialUrl: URL): Promise<{ bytes: Uint8Array; 
       continue
     }
     if (!response.ok) { cancelPending(pending); throw new ImportError('SOURCE_BLOCKED', `图片返回 HTTP ${response.status}`) }
-    const contentType = response.headers.get('content-type') || ''
-    if (!contentType.toLowerCase().startsWith('image/')) { cancelPending(pending); throw new ImportError('SOURCE_BLOCKED', '目标资源不是图片') }
+    const rawContentType = response.headers.get('content-type') || ''
+    const declaredMimeType = rawContentType.split(';', 1)[0].trim().toLowerCase()
+    const contentType = normalizeImageContentType(rawContentType)
+    if (!contentType) {
+      cancelPending(pending)
+      if (declaredMimeType === 'image/svg+xml') throw new ImportError('SOURCE_BLOCKED', '不支持 SVG 图片')
+      throw new ImportError('SOURCE_BLOCKED', '图片格式不受支持')
+    }
     return { bytes: await readPending(pending, MAX_IMAGE_BYTES), contentType }
   }
   throw new ImportError('SOURCE_BLOCKED', '图片重定向次数过多')

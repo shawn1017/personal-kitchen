@@ -23,6 +23,9 @@ export default defineConfig({
   alias: {
     '@': path.resolve(__dirname, '..', 'src')
   },
+  defineConstants: {
+    'process.env.TARO_APP_IMPORT_API_BASE': JSON.stringify(process.env.TARO_APP_IMPORT_API_BASE || '')
+  },
   framework: 'react',
   compiler: {
     type: 'webpack5',

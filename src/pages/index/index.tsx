@@ -3,6 +3,7 @@ import Taro, { useDidShow } from '@tarojs/taro'
 import { Button, Image, Input, ScrollView, Text, View } from '@tarojs/components'
 import kitchenHero from '@/assets/recipes/kitchen-hero.jpg'
 import HeartMealIcon from '@/components/Icon'
+import PersistedImage from '@/components/PersistedImage'
 import { CartItem, Category, Recipe } from '@/types'
 import { addRecipeToCart, calcTotalCount, getCart, updateCartItemQuantity } from '@/utils/cart'
 import { getCategories } from '@/utils/categories'
@@ -84,7 +85,7 @@ export default function KitchenPage() {
                 <View key={recipe.id} className='kitchen-recipe'>
                   <View className='recipe-tap' onClick={() => Taro.navigateTo({ url: `/pages/recipe-detail/index?id=${recipe.id}` })}>
                     {recipe.coverImage
-                      ? <Image className='kitchen-cover' src={recipe.coverImage} mode='aspectFill' />
+                      ? <PersistedImage className='kitchen-cover' src={recipe.coverImage} mode='aspectFill' />
                       : <View className='kitchen-cover pk-cover-fallback'>{recipe.name.slice(0, 1)}</View>}
                     <View className='kitchen-copy'>
                       <View className='kitchen-name'>{recipe.name}</View>

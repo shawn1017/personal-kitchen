@@ -31,24 +31,93 @@ export function parseSourceUrl(value: unknown): { url: URL; platform: Platform }
 function isPrivateIpv4(ip: string): boolean {
   const parts = ip.split('.').map(Number)
   if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return true
-  const [a, b] = parts
-  return a === 0 || a === 10 || a === 127 || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || a >= 224
+  const [a, b, c] = parts
+  return a === 0
+    || a === 10
+    || (a === 100 && b >= 64 && b <= 127)
+    || a === 127
+    || (a === 169 && b === 254)
+    || (a === 172 && b >= 16 && b <= 31)
+    || (a === 192 && b === 0 && c === 0)
+    || (a === 192 && b === 0 && c === 2)
+    || (a === 192 && b === 88 && c === 99)
+    || (a === 192 && b === 168)
+    || (a === 198 && (b === 18 || b === 19))
+    || (a === 198 && b === 51 && c === 100)
+    || (a === 203 && b === 0 && c === 113)
+    || a >= 224
+}
+
+function parseIpv6Words(ip: string): number[] | null {
+  let normalized = ip.toLowerCase().split('%', 1)[0]
+  const ipv4Tail = normalized.slice(normalized.lastIndexOf(':') + 1)
+  if (net.isIP(ipv4Tail) === 4) {
+    const octets = ipv4Tail.split('.').map(Number)
+    normalized = `${normalized.slice(0, normalized.lastIndexOf(':') + 1)}${((octets[0] << 8) | octets[1]).toString(16)}:${((octets[2] << 8) | octets[3]).toString(16)}`
+  }
+
+  const compressed = normalized.split('::')
+  if (compressed.length > 2) return null
+  const left = compressed[0] ? compressed[0].split(':') : []
+  const right = compressed.length === 2 && compressed[1] ? compressed[1].split(':') : []
+  const missing = 8 - left.length - right.length
+  if ((compressed.length === 1 && missing !== 0) || (compressed.length === 2 && missing < 1)) return null
+  const segments = compressed.length === 2
+    ? [...left, ...Array.from({ length: missing }, () => '0'), ...right]
+    : left
+  if (segments.length !== 8 || segments.some((segment) => !/^[0-9a-f]{1,4}$/.test(segment))) return null
+  return segments.map((segment) => Number.parseInt(segment, 16))
 }
 
 function isPrivateIpv6(ip: string): boolean {
-  const normalized = ip.toLowerCase()
-  return normalized === '::' || normalized === '::1' || normalized.startsWith('fc') || normalized.startsWith('fd') || normalized.startsWith('fe8') || normalized.startsWith('fe9') || normalized.startsWith('fea') || normalized.startsWith('feb') || normalized.startsWith('::ffff:127.') || normalized.startsWith('::ffff:10.') || normalized.startsWith('::ffff:192.168.')
+  const words = parseIpv6Words(ip)
+  if (!words) return true
+
+  // IPv4-mapped IPv6 can use either dotted decimal or compressed hex notation.
+  if (words.slice(0, 5).every((word) => word === 0) && words[5] === 0xffff) {
+    return isPrivateIpv4(`${words[6] >>> 8}.${words[6] & 0xff}.${words[7] >>> 8}.${words[7] & 0xff}`)
+  }
+
+  const isLegacyCompatible = words.slice(0, 6).every((word) => word === 0)
+  const isTranslationPrefix = (words[0] === 0x0064 && words[1] === 0xff9b && words.slice(2, 6).every((word) => word === 0))
+    || (words[0] === 0x0064 && words[1] === 0xff9b && words[2] === 0x0001)
+  const isDiscardOnly = words[0] === 0x0100 && words.slice(1, 4).every((word) => word === 0)
+  const isIetfReserved = words[0] === 0x2001 && (words[1] & 0xfe00) === 0
+  const isDocumentation = (words[0] === 0x2001 && words[1] === 0x0db8)
+    || (words[0] === 0x3fff && (words[1] & 0xf000) === 0)
+  const isSixToFour = words[0] === 0x2002
+  const isSegmentRoutingSid = words[0] === 0x5f00
+  const isOutsideGlobalUnicast = (words[0] & 0xe000) !== 0x2000
+  const isUniqueLocal = (words[0] & 0xfe00) === 0xfc00
+  const isLinkLocal = (words[0] & 0xffc0) === 0xfe80
+  const isDeprecatedSiteLocal = (words[0] & 0xffc0) === 0xfec0
+  const isMulticast = (words[0] & 0xff00) === 0xff00
+
+  return isLegacyCompatible
+    || isTranslationPrefix
+    || isDiscardOnly
+    || isIetfReserved
+    || isDocumentation
+    || isSixToFour
+    || isSegmentRoutingSid
+    || isOutsideGlobalUnicast
+    || isUniqueLocal
+    || isLinkLocal
+    || isDeprecatedSiteLocal
+    || isMulticast
 }
 
 export function isPrivateIp(ip: string): boolean {
-  const version = net.isIP(ip)
-  if (version === 4) return isPrivateIpv4(ip)
-  if (version === 6) return isPrivateIpv6(ip)
+  const unwrapped = ip.startsWith('[') && ip.endsWith(']') ? ip.slice(1, -1) : ip
+  const version = net.isIP(unwrapped)
+  if (version === 4) return isPrivateIpv4(unwrapped)
+  if (version === 6) return isPrivateIpv6(unwrapped)
   return true
 }
 
 export async function assertPublicDestination(url: URL): Promise<void> {
-  const hostname = url.hostname.toLowerCase().replace(/\.$/, '')
+  const rawHostname = url.hostname.toLowerCase().replace(/\.$/, '')
+  const hostname = rawHostname.startsWith('[') && rawHostname.endsWith(']') ? rawHostname.slice(1, -1) : rawHostname
   if (hostname === 'localhost' || hostname.endsWith('.local') || hostname.endsWith('.internal')) throw new ImportError('SOURCE_BLOCKED', '目标地址不允许访问')
   if (net.isIP(hostname)) {
     if (isPrivateIp(hostname)) throw new ImportError('SOURCE_BLOCKED', '目标地址不允许访问')

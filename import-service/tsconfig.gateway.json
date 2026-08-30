@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "declaration": false,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "noEmit": true,
+    "rootDir": "..",
+    "sourceMap": false,
+    "types": ["node"]
+  },
+  "include": [
+    "test/deno-shim.d.ts",
+    "test/gateway.test.ts",
+    "../supabase/functions/vercel-gateway/gateway.ts",
+    "../supabase/functions/vercel-gateway/index.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}
