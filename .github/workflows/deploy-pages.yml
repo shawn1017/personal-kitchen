@@ -41,6 +41,19 @@ jobs:
         env:
           TARO_APP_IMPORT_API_BASE: https://fclhapemspdimjixbjzt.supabase.co/functions/v1/vercel-gateway
 
+      - name: Verify H5 import runtime configuration
+        env:
+          TARO_APP_IMPORT_API_BASE: https://fclhapemspdimjixbjzt.supabase.co/functions/v1/vercel-gateway
+        run: |
+          if grep -R -q 'process.env.TARO_APP_IMPORT_API_BASE' dist-h5; then
+            echo 'H5 bundle still contains a Node-only process.env reference.' >&2
+            exit 1
+          fi
+          if ! grep -R -F -q "$TARO_APP_IMPORT_API_BASE" dist-h5; then
+            echo 'H5 bundle is missing the configured import gateway URL.' >&2
+            exit 1
+          fi
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
